@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+qdrant-client
+python-dotenv
+psycopg2-binary
+requests
+debugpy
+langchain
+langchain-ollama
