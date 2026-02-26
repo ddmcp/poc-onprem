@@ -26,7 +26,7 @@ A pipeline that ingests a static PDF corpus into a vector database (Qdrant) via 
 
 
 ## The Result
-A private, enterprise-grade AI knowledge system that turns your documents into a **secure, searchable, and intelligent decision-support layer**.
+A private, enterprise-grade AI knowledge system that turns the documents into a **secure, searchable, and intelligent decision-support layer**.
 
 
 ## 🚀 Getting Started
