@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-docs-ui
+  namespace: poc-onprem
+  labels:
+    app: chat-docs-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-docs-ui
+  template:
+    metadata:
+      labels:
+        app: chat-docs-ui
+    spec:
+      serviceAccountName: poc-onprem-sa
+      containers:
+      - name: chat-docs-ui
+        image: quay.io/tncibmniceteam/poc-onprem-ui:latest
+        ports:
+        - containerPort: 80
+          name: http
+        envFrom:
+        - configMapRef:
+            name: services-config
+
+# Made with Bob

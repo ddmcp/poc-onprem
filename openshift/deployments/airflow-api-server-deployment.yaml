@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-api-server
+  namespace: poc-onprem
+  labels:
+    app: airflow-api-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-api-server
+  template:
+    metadata:
+      labels:
+        app: airflow-api-server
+    spec:
+      serviceAccountName: poc-onprem-sa
+      initContainers:
+      - name: airflow-db-migrate
+        image: quay.io/tncibmniceteam/poc-onprem-airflow-api-server:latest
+        command: ["bash", "-c", "airflow db migrate"]
+        env:
+        - name: AIRFLOW_UID
+          value: "50000"
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: fernet-key
+        - name: AIRFLOW__CORE__INTERNAL_API_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: internal-api-secret-key
+        - name: AIRFLOW__API_AUTH__JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: jwt-secret
+        envFrom:
+        - configMapRef:
+            name: airflow-config
+      containers:
+      - name: airflow-api-server
+        image: quay.io/tncibmniceteam/poc-onprem-airflow-api-server:latest
+        command: ["bash", "-c", "airflow api-server"]
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: AIRFLOW_UID
+          value: "50000"
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: fernet-key
+        - name: AIRFLOW__CORE__INTERNAL_API_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: internal-api-secret-key
+        - name: AIRFLOW__API_AUTH__JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: jwt-secret
+        envFrom:
+        - configMapRef:
+            name: airflow-config
+        volumeMounts:
+        - name: dags
+          mountPath: /opt/airflow/dags
+        - name: logs
+          mountPath: /opt/airflow/logs
+      volumes:
+      - name: dags
+        configMap:
+          name: airflow-dags
+      - name: logs
+        persistentVolumeClaim:
+          claimName: airflow-logs-pvc
+
+# Made with Bob

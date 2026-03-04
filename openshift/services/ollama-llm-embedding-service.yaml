@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-llm-embedding
+  namespace: poc-onprem
+  labels:
+    app: ollama-llm-embedding
+spec:
+  type: ClusterIP
+  ports:
+  - port: 11434
+    targetPort: 11434
+    protocol: TCP
+    name: ollama
+  selector:
+    app: ollama-llm-embedding
+
+# Made with Bob

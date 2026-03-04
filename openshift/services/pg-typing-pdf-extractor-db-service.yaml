@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-typing-pdf-extractor-db
+  namespace: poc-onprem
+  labels:
+    app: pg-typing-pdf-extractor-db
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+  selector:
+    app: pg-typing-pdf-extractor-db
+
+# Made with Bob

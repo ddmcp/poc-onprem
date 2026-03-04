@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant-vector-db
+  namespace: poc-onprem
+  labels:
+    app: qdrant-vector-db
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6333
+    targetPort: 6333
+    protocol: TCP
+    name: http
+  - port: 6334
+    targetPort: 6334
+    protocol: TCP
+    name: grpc
+  selector:
+    app: qdrant-vector-db
+
+# Made with Bob

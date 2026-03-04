@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-docs-service
+  namespace: poc-onprem
+  labels:
+    app: chat-docs-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-docs-service
+  template:
+    metadata:
+      labels:
+        app: chat-docs-service
+    spec:
+      serviceAccountName: poc-onprem-sa
+      containers:
+      - name: chat-docs-service
+        image: quay.io/tncibmniceteam/poc-onprem-chat-docs-service:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 5679
+          name: debug
+        command: ["python", "-m", "debugpy", "--listen", "0.0.0.0:5679", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+        envFrom:
+        - configMapRef:
+            name: services-config
+
+# Made with Bob

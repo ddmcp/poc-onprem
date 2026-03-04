@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airflow-config
+  namespace: poc-onprem
+data:
+  AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+  AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+  AIRFLOW__CORE__AUTH_MANAGER: "airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager"
+  AIRFLOW__API__AUTH_BACKENDS: "airflow.providers.fab.auth_manager.api.auth.backend.basic_auth"
+  AIRFLOW__FAB__AUTH_BACKENDS: "airflow.providers.fab.auth_manager.api.auth.backend.session,airflow.providers.fab.auth_manager.api.auth.backend.basic_auth"
+  AIRFLOW__CORE__EXECUTION_API_SERVER_URL: "http://airflow-api-server.poc-onprem:8080/execution"
+  AIRFLOW_UID: "50000"
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:airflow@pg-airflow-db:5432/airflow"
+  AIRFLOW_CONN_PDF_DB: "postgresql://pdfuser:pdfpassword@pg-typing-pdf-extractor-db:5432/pdfdb"
+
+# Made with Bob

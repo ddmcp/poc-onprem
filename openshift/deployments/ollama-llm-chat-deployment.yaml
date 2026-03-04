@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-llm-chat
+  namespace: poc-onprem
+  labels:
+    app: ollama-llm-chat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama-llm-chat
+  template:
+    metadata:
+      labels:
+        app: ollama-llm-chat
+    spec:
+      serviceAccountName: poc-onprem-sa
+      containers:
+      - name: ollama
+        image: quay.io/tncibmniceteam/poc-onprem-ollama-llm-chat:latest
+        ports:
+        - containerPort: 11434
+          name: ollama
+        env:
+        - name: OLLAMA_MODEL
+          value: "tinyllama"
+        resources:
+          limits:
+            cpu: "2000m"
+            memory: "10Gi"
+          requests:
+            cpu: "2000m"
+            memory: "6Gi"
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - ollama list | grep -q $OLLAMA_MODEL
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - ollama list | grep -q $OLLAMA_MODEL
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 60
+        stdin: true
+        tty: true
+      volumes:
+      - name: ollama-data
+        persistentVolumeClaim:
+          claimName: ollama-llm-chat-pvc
+
+# Made with Bob

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-llm-embedding
+  namespace: poc-onprem
+  labels:
+    app: ollama-llm-embedding
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama-llm-embedding
+  template:
+    metadata:
+      labels:
+        app: ollama-llm-embedding
+    spec:
+      serviceAccountName: poc-onprem-sa
+      containers:
+      - name: ollama
+        image: quay.io/tncibmniceteam/poc-onprem-ollama-llm-embedding:latest
+        ports:
+        - containerPort: 11434
+          name: ollama
+        env:
+        - name: OLLAMA_MODEL
+          value: "nomic-embed-text"
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - ollama list | grep -q $OLLAMA_MODEL
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - ollama list | grep -q $OLLAMA_MODEL
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 60
+        stdin: true
+        tty: true
+      volumes:
+      - name: ollama-data
+        persistentVolumeClaim:
+          claimName: ollama-llm-embedding-pvc
+
+# Made with Bob

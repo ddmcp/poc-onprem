@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-docs-service
+  namespace: poc-onprem
+  labels:
+    app: chat-docs-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  - port: 5679
+    targetPort: 5679
+    protocol: TCP
+    name: debug
+  selector:
+    app: chat-docs-service
+
+# Made with Bob

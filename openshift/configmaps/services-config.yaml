@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: services-config
+  namespace: poc-onprem
+data:
+  # Database configuration
+  DB_HOST: "pg-typing-pdf-extractor-db"
+  DB_NAME: "pdfdb"
+  DB_USER: "pdfuser"
+  DB_PASS: "pdfpassword"
+  
+  # Qdrant configuration
+  QDRANT_HOST: "qdrant-vector-db"
+  QDRANT_PORT: "6333"
+  
+  # Ollama configuration
+  OLLAMA_CHAT_MODEL: "tinyllama"
+  OLLAMA_EMBEDDING_MODEL: "nomic-embed-text"
+  OLLAMA_EMBEDDING_URL: "http://ollama-llm-embedding.poc-onprem:11434"
+  
+  # Chat UI configuration
+  #CHAT_API_URL: "http://chat-docs-service.poc-onprem:8000/ask_llm_model"
+  CHAT_API_URL: "http://chat-docs-service-poc-onprem.apps.rio-wx.automation.nca.ihost.com/ask_llm_model"
+
+# Made with Bob

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: typing-pdf-extractor-service
+  namespace: poc-onprem
+  labels:
+    app: typing-pdf-extractor-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: typing-pdf-extractor-service
+  template:
+    metadata:
+      labels:
+        app: typing-pdf-extractor-service
+    spec:
+      serviceAccountName: poc-onprem-sa
+      containers:
+      - name: typing-pdf-extractor-service
+        image: quay.io/tncibmniceteam/poc-onprem-typing-pdf-extractor-service:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: services-config
+
+# Made with Bob
