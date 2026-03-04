@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: poc-onprem-ns
+  labels:
+    name: poc-onprem-ns
+
+# Made with Bob
