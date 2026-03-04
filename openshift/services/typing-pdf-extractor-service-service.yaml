@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: typing-pdf-extractor-service
+  namespace: poc-onprem
+  labels:
+    app: typing-pdf-extractor-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: typing-pdf-extractor-service
+
+# Made with Bob

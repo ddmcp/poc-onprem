@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-llm-embedding-pvc
+  namespace: poc-onprem
+  labels:
+    app: ollama-llm-embedding
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+# Made with Bob

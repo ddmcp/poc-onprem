@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+  namespace: poc-onprem
+  labels:
+    app: airflow-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+  template:
+    metadata:
+      labels:
+        app: airflow-scheduler
+    spec:
+      serviceAccountName: poc-onprem-sa    
+      containers:
+      - name: airflow-scheduler
+        image: quay.io/tncibmniceteam/poc-onprem-airflow-scheduler:latest
+        command: ["/entrypoint", "scheduler"]
+        ports:
+        - containerPort: 5678
+          name: debug
+        env:
+        - name: AIRFLOW_UID
+          value: "50000"
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: fernet-key
+        - name: AIRFLOW__CORE__INTERNAL_API_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: internal-api-secret-key
+        - name: AIRFLOW__API_AUTH__JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: jwt-secret
+        envFrom:
+        - configMapRef:
+            name: airflow-config
+        volumeMounts:
+        - name: dags
+          mountPath: /opt/airflow/dags
+        - name: logs
+          mountPath: /opt/airflow/logs
+      volumes:
+      - name: dags
+        configMap:
+          name: airflow-dags
+      - name: logs
+        persistentVolumeClaim:
+          claimName: airflow-logs-pvc
+
+# Made with Bob

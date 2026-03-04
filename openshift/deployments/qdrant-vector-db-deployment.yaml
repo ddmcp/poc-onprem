@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qdrant-vector-db
+  namespace: poc-onprem
+  labels:
+    app: qdrant-vector-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qdrant-vector-db
+  template:
+    metadata:
+      labels:
+        app: qdrant-vector-db
+    spec:
+      serviceAccountName: poc-onprem-sa
+      containers:
+      - name: qdrant
+        image: qdrant/qdrant:latest
+        ports:
+        - containerPort: 6333
+          name: http
+        - containerPort: 6334
+          name: grpc
+        volumeMounts:
+        - name: qdrant-data
+          mountPath: /qdrant/storage
+        livenessProbe:
+          tcpSocket:
+            port: 6333
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          tcpSocket:
+            port: 6333
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+      volumes:
+      - name: qdrant-data
+        persistentVolumeClaim:
+          claimName: qdrant-vector-db-pvc
+
+# Made with Bob

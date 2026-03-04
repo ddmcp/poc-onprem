@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-typing-pdf-extractor-db
+  namespace: poc-onprem
+  labels:
+    app: pg-typing-pdf-extractor-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pg-typing-pdf-extractor-db
+  template:
+    metadata:
+      labels:
+        app: pg-typing-pdf-extractor-db
+    spec:
+      serviceAccountName: poc-onprem-sa 
+      containers:
+      - name: postgres
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-pdf-secrets
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-pdf-secrets
+              key: postgres-password
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-pdf-secrets
+              key: postgres-db
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+          subPath: pgdata
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - pdfuser
+            - -d
+            - pdfdb
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - pdfuser
+            - -d
+            - pdfdb
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: pg-typing-pdf-extractor-db-pvc
+      - name: init-script
+        configMap:
+          name: postgres-init-script
+
+# Made with Bob

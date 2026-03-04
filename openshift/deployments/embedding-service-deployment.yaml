@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embedding-service
+  namespace: poc-onprem
+  labels:
+    app: embedding-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: embedding-service
+  template:
+    metadata:
+      labels:
+        app: embedding-service
+    spec:
+      serviceAccountName: poc-onprem-sa
+      initContainers:
+      - name: wait-for-qdrant
+        image: curlimages/curl:8.5.0
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "Waiting for Qdrant to be ready..."
+          until curl -f -s http://qdrant-vector-db:6333/collections > /dev/null 2>&1; do
+            echo "Qdrant is not ready yet. Retrying in 5 seconds..."
+            sleep 5
+          done
+          echo "Qdrant is ready and responding!"
+        envFrom:
+        - configMapRef:
+            name: services-config
+      containers:
+      - name: embedding-service
+        image: quay.io/tncibmniceteam/poc-onprem-embedding-service:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: services-config
+
+# Made with Bob
