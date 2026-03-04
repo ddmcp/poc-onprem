@@ -18,7 +18,7 @@ spec:
       serviceAccountName: poc-onprem-sa
       containers:
       - name: ollama
-        image: quay.io/tncibmniceteam/poc-onprem-ollama-llm-embedding:latest
+        image: <your-registry>/poc-onprem-ollama-llm-embedding:latest
         ports:
         - containerPort: 11434
           name: ollama

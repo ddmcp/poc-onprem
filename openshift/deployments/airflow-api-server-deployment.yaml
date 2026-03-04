@@ -18,7 +18,7 @@ spec:
       serviceAccountName: poc-onprem-sa
       initContainers:
       - name: airflow-db-migrate
-        image: quay.io/tncibmniceteam/poc-onprem-airflow-api-server:latest
+        image: <your-registry>/poc-onprem-airflow-api-server:latest
         command: ["bash", "-c", "airflow db migrate"]
         env:
         - name: AIRFLOW_UID
@@ -43,7 +43,7 @@ spec:
             name: airflow-config
       containers:
       - name: airflow-api-server
-        image: quay.io/tncibmniceteam/poc-onprem-airflow-api-server:latest
+        image: <your-registry>/poc-onprem-airflow-api-server:latest
         command: ["bash", "-c", "airflow api-server"]
         ports:
         - containerPort: 8080

@@ -18,7 +18,7 @@ spec:
       serviceAccountName: poc-onprem-sa
       containers:
       - name: typing-pdf-extractor-service
-        image: quay.io/tncibmniceteam/poc-onprem-typing-pdf-extractor-service:latest
+        image: <your-registry>/poc-onprem-typing-pdf-extractor-service:latest
         ports:
         - containerPort: 8000
           name: http

@@ -33,7 +33,7 @@ spec:
             name: services-config
       containers:
       - name: embedding-service
-        image: quay.io/tncibmniceteam/poc-onprem-embedding-service:latest
+        image: <your-registry>/poc-onprem-embedding-service:latest
         ports:
         - containerPort: 8000
           name: http

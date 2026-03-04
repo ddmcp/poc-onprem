@@ -18,7 +18,7 @@ spec:
       serviceAccountName: poc-onprem-sa    
       containers:
       - name: airflow-scheduler
-        image: quay.io/tncibmniceteam/poc-onprem-airflow-scheduler:latest
+        image: <your-registry>/poc-onprem-airflow-scheduler:latest
         command: ["/entrypoint", "scheduler"]
         ports:
         - containerPort: 5678

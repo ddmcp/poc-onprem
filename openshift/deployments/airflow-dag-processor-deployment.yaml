@@ -22,7 +22,7 @@ spec:
         fsGroup: 0      
       containers:
       - name: airflow-dag-processor      
-        image: quay.io/tncibmniceteam/poc-onprem-airflow-dag-processor:latest
+        image: <your-registry>/poc-onprem-airflow-dag-processor:latest
         command: ["/entrypoint", "dag-processor"]
         env:
         - name: AIRFLOW_UID

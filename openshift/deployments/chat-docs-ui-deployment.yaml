@@ -18,7 +18,7 @@ spec:
       serviceAccountName: poc-onprem-sa
       containers:
       - name: chat-docs-ui
-        image: quay.io/tncibmniceteam/poc-onprem-ui:latest
+        image: <your-registry>/poc-onprem-ui:latest
         ports:
         - containerPort: 80
           name: http
