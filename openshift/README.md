@@ -88,6 +88,7 @@ oc project poc-onprem
 ### 2. Create ServiceAccount
 ```bash
 oc apply -f serviceaccount.yaml
+oc adm policy add-scc-to-user anyuid -n poc-onprem -z poc-onprem-sa
 ```
 
 ### 3. Create Secrets
@@ -116,8 +117,6 @@ oc apply -f pvcs/ollama-llm-embedding-pvc.yaml
 oc apply -f pvcs/ollama-llm-chat-pvc.yaml
 oc apply -f pvcs/airflow-logs-pvc.yaml
 ```
-
-**Note:** Airflow DAGs are loaded from a ConfigMap (airflow-dags), not from a PVC.
 
 Wait for PVCs to be bound:
 ```bash
@@ -279,26 +278,6 @@ All stateful services use PersistentVolumeClaims (PVCs) for data persistence:
 
 **Important:** Airflow logs use ReadWriteMany (RWX) access mode because they need to be shared across multiple Airflow pods (scheduler, dag-processor, and api-server). Ensure your cluster has a StorageClass that supports RWX access mode (e.g., NFS, CephFS, or GlusterFS).
 
-## Airflow DAGs
-
-Airflow DAG files are loaded from a ConfigMap (`airflow-dags`) rather than a PVC. This approach:
-- Makes DAG updates easier (update ConfigMap and restart pods)
-- Eliminates the need for RWX storage for DAGs
-- Ensures all Airflow pods have the same DAG files
-
-The ConfigMap contains all three DAG files:
-- `debug_example_dag.py` - Simple test DAG
-- `minio_pdf_extract_chunks_to_pg_dag.py` - PDF extraction pipeline
-- `pg_chunks_to_vectors_dag.py` - Vector embedding pipeline
-
-To update DAGs, edit the ConfigMap and restart the Airflow pods:
-```bash
-oc edit configmap airflow-dags
-oc rollout restart deployment/airflow-scheduler
-oc rollout restart deployment/airflow-dag-processor
-oc rollout restart deployment/airflow-api-server
-```
-
 ## Troubleshooting
 
 ### Pods not starting
@@ -346,8 +325,6 @@ oc delete -f secrets/
 
 ## Notes
 
-- DAGs need to be mounted or copied into Airflow pods (currently using emptyDir)
-- Consider using a Git repository or ConfigMap for DAG files
 - The init container in airflow-api-server runs database migrations
 - Health checks are configured for critical services
 - Debug port (5679) is exposed for chat-docs-service for development purposes
