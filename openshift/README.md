@@ -1,11 +1,44 @@
-# OpenShift Deployment Guide
+# OpenShift Deployment Guide <!-- omit in toc -->
 
 This directory contains OpenShift manifests converted from the Docker Compose project.
+
+## Contents <!-- omit in toc -->
+
+- [Directory Structure](#directory-structure)
+- [Prerequisites](#prerequisites)
+- [Namespace](#namespace)
+- [Docker Images Required](#docker-images-required)
+- [Update Image References](#update-image-references)
+- [Quick Start: Automated Deployment](#quick-start-automated-deployment)
+  - [Access Your Applications](#access-your-applications)
+- [Advanced: Manual Deployment](#advanced-manual-deployment)
+  - [1. Create Namespace](#1-create-namespace)
+  - [2. Create ServiceAccount](#2-create-serviceaccount)
+  - [3. Create Secrets](#3-create-secrets)
+  - [4. Create ConfigMaps](#4-create-configmaps)
+  - [5. Create PersistentVolumeClaims](#5-create-persistentvolumeclaims)
+  - [6. Deploy Databases](#6-deploy-databases)
+  - [7. Deploy Storage and Vector DB](#7-deploy-storage-and-vector-db)
+  - [8. Deploy LLM Services](#8-deploy-llm-services)
+  - [9. Deploy Airflow Components](#9-deploy-airflow-components)
+  - [10. Deploy Application Services](#10-deploy-application-services)
+  - [11. Create Routes for External Access](#11-create-routes-for-external-access)
+  - [Default Credentials](#default-credentials)
+    - [Airflow](#airflow)
+    - [MinIO](#minio)
+    - [PostgreSQL (Airflow)](#postgresql-airflow)
+    - [PostgreSQL (PDF)](#postgresql-pdf)
+  - [LLM Provider Configuration](#llm-provider-configuration)
+    - [Ollama (Default)](#ollama-default)
+    - [OpenAI-Compatible Endpoints](#openai-compatible-endpoints)
+    - [Configuration Variables](#configuration-variables)
 
 ## Directory Structure
 
 ```
 openshift/
+├── deploy.sh         # Automated deployment script
+├── destroy.sh        # Cleanup script
 ├── secrets/          # Secret configurations for sensitive data
 ├── configmaps/       # ConfigMaps for application configuration
 ├── pvcs/             # PersistentVolumeClaims for persistent storage
@@ -71,7 +104,32 @@ Replace `<your-registry>` with your actual registry URL in the following files:
 - `deployments/chat-docs-service-deployment.yaml`
 - `deployments/chat-docs-ui-deployment.yaml`
 
-## Deployment Order
+## Quick Start: Automated Deployment
+
+The fastest way to deploy is using the automated deployment script:
+
+1. Login to your OpenShift cluster with the CLI:
+   ```bash
+   oc login <your-cluster-url>
+   ````
+2. *Optional*: set config variables in `configmaps/services-config.yaml` and `secrets/openai-secrets.yaml` e.g `LLM_PROVIDER, OPENAI_API_BASE_URL, OPENAI_MODEL, CHAT_API_URL, OPENAI_API_KEY`:
+   ```bash
+   vim configmaps/services-config.yaml
+   vim secrets/openai-secrets.yaml
+   ```
+3. Run deploy script:
+   ```bash
+   ./deploy.sh
+   ```
+
+### Access Your Applications
+
+After deployment completes, the script will display URLs for:
+- **Airflow UI** - Workflow orchestration interface (admin/admin)
+- **MinIO Console** - Object storage management (minioadmin/minioadmin)
+- **Chat Docs UI** - Document chat interface
+
+## Advanced: Manual Deployment
 
 Deploy the resources in the following order to ensure dependencies are met:
 
@@ -187,49 +245,37 @@ oc apply -f routes/minio-api-route.yaml
 oc apply -f routes/chat-docs-ui-route.yaml
 ```
 
-## Quick Deploy All
+### Default Credentials
 
-Alternatively, deploy everything at once (not recommended for first-time deployment):
+#### Airflow
+- Default credentials need to be created after first deployment
+- Access the Airflow pod and run: `airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com`
 
-```bash
-# Deploy in order
-oc apply -f namespace.yaml
-oc project poc-onprem
-oc apply -f serviceaccount.yaml
-oc apply -f secrets/
-oc apply -f configmaps/
-oc apply -f pvcs/
-# Wait for PVCs to be bound
-oc get pvc -w
-# Then deploy the rest
-oc apply -f deployments/
-oc apply -f services/
-oc apply -f routes/
-```
+#### MinIO
+- Username: `minioadmin`
+- Password: `minioadmin`
+- **⚠️ Change these in production!** Update `secrets/minio-secrets.yaml`
 
-## Accessing the Applications
+#### PostgreSQL (Airflow)
+- Username: `airflow`
+- Password: `airflow`
+- Database: `airflow`
+- **⚠️ Change these in production!** Update `secrets/postgres-airflow-secrets.yaml`
 
-After deployment, get the route URLs:
+#### PostgreSQL (PDF)
+- Username: `pdfuser`
+- Password: `pdfpassword`
+- Database: `pdfdb`
+- **⚠️ Change these in production!** Update `secrets/postgres-pdf-secrets.yaml`
 
-```bash
-# Airflow Web UI
-oc get route airflow-api-server -o jsonpath='{.spec.host}'
-
-# MinIO Console
-oc get route minio-console -o jsonpath='{.spec.host}'
-
-# Chat Docs UI
-oc get route chat-docs-ui -o jsonpath='{.spec.host}'
-```
-
-## LLM Provider Configuration
+### LLM Provider Configuration
 
 The chat-docs-service supports two LLM providers:
 
-### Ollama (Default)
+#### Ollama (Default)
 No additional configuration needed. The service will use the Ollama deployment by default.
 
-### OpenAI-Compatible Endpoints
+#### OpenAI-Compatible Endpoints
 To use OpenAI or any OpenAI-compatible endpoint:
 
 1. **Update the `openai-secrets.yaml` with your API key:**
@@ -253,7 +299,7 @@ To use OpenAI or any OpenAI-compatible endpoint:
    oc rollout restart deployment/chat-docs-service -n poc-onprem
    ```
 
-### Configuration Variables
+#### Configuration Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -264,110 +310,3 @@ To use OpenAI or any OpenAI-compatible endpoint:
 | `OPENAI_TEMPERATURE` | `0` | Temperature for response generation |
 
 **Note:** The `openai-secrets` secret is optional. If not provided, the service will default to using Ollama. This allows existing Ollama-only deployments to continue working without changes.
-
-## Default Credentials
-
-### Airflow
-- Default credentials need to be created after first deployment
-- Access the Airflow pod and run: `airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com`
-
-### MinIO
-- Username: `minioadmin`
-- Password: `minioadmin`
-- **⚠️ Change these in production!** Update `secrets/minio-secrets.yaml`
-
-### PostgreSQL (Airflow)
-- Username: `airflow`
-- Password: `airflow`
-- Database: `airflow`
-- **⚠️ Change these in production!** Update `secrets/postgres-airflow-secrets.yaml`
-
-### PostgreSQL (PDF)
-- Username: `pdfuser`
-- Password: `pdfpassword`
-- Database: `pdfdb`
-- **⚠️ Change these in production!** Update `secrets/postgres-pdf-secrets.yaml`
-
-## Monitoring Deployment
-
-Check the status of all deployments:
-```bash
-oc get deployments
-oc get pods
-oc get services
-oc get routes
-```
-
-View logs for a specific pod:
-```bash
-oc logs -f deployment/<deployment-name>
-```
-
-## Persistent Storage
-
-All stateful services use PersistentVolumeClaims (PVCs) for data persistence:
-
-| PVC Name                       | Size | Access Mode   | Used By                           |
-| ------------------------------ | ---- | ------------- | --------------------------------- |
-| pg-airflow-db-pvc              | 10Gi | ReadWriteOnce | Airflow PostgreSQL database       |
-| pg-typing-pdf-extractor-db-pvc | 20Gi | ReadWriteOnce | PDF PostgreSQL database           |
-| minio-pvc                      | 50Gi | ReadWriteOnce | MinIO object storage              |
-| qdrant-vector-db-pvc           | 30Gi | ReadWriteOnce | Qdrant vector database            |
-| ollama-llm-embedding-pvc       | 10Gi | ReadWriteOnce | Ollama embedding model data       |
-| ollama-llm-chat-pvc            | 10Gi | ReadWriteOnce | Ollama chat model data            |
-| airflow-logs-pvc               | 10Gi | ReadWriteMany | Airflow logs (shared across pods) |
-
-**Note:** The PVCs use the default StorageClass in your OpenShift cluster. If you need to use a specific StorageClass, add `storageClassName: <your-storage-class>` to each PVC spec.
-
-**Important:** Airflow logs use ReadWriteMany (RWX) access mode because they need to be shared across multiple Airflow pods (scheduler, dag-processor, and api-server). Ensure your cluster has a StorageClass that supports RWX access mode (e.g., NFS, CephFS, or GlusterFS).
-
-## Troubleshooting
-
-### Pods not starting
-```bash
-oc describe pod <pod-name>
-oc logs <pod-name>
-```
-
-### Database connection issues
-- Verify secrets are created correctly
-- Check service names match the connection strings in ConfigMaps
-- Ensure databases are ready before dependent services start
-
-### Image pull errors
-- Verify image names and tags are correct
-- Ensure OpenShift has access to your container registry
-- Create image pull secrets if using a private registry
-
-### Resource constraints
-- Check if pods are being evicted due to resource limits
-- Adjust resource requests/limits in deployment manifests
-- The Ollama LLM services require significant memory (6-10GB)
-
-## Cleanup
-
-To remove all resources:
-```bash
-oc delete -f routes/
-oc delete -f services/
-oc delete -f deployments/
-oc delete -f configmaps/
-oc delete -f secrets/
-```
-
-## Security Considerations
-
-1. **Change default passwords** in all secret files before production deployment
-2. **Use proper RBAC** - create service accounts with minimal required permissions
-3. **Enable network policies** to restrict pod-to-pod communication
-4. **Use encrypted secrets** - consider using sealed secrets or external secret management
-5. **Implement resource quotas** to prevent resource exhaustion
-6. **Enable pod security policies** or pod security standards
-7. **Use TLS** for all external routes (already configured)
-8. **Scan container images** for vulnerabilities before deployment
-
-## Notes
-
-- The init container in airflow-api-server runs database migrations
-- Health checks are configured for critical services
-- Debug port (5679) is exposed for chat-docs-service for development purposes
