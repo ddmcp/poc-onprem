@@ -222,6 +222,49 @@ oc get route minio-console -o jsonpath='{.spec.host}'
 oc get route chat-docs-ui -o jsonpath='{.spec.host}'
 ```
 
+## LLM Provider Configuration
+
+The chat-docs-service supports two LLM providers:
+
+### Ollama (Default)
+No additional configuration needed. The service will use the Ollama deployment by default.
+
+### OpenAI-Compatible Endpoints
+To use OpenAI or any OpenAI-compatible endpoint:
+
+1. **Update the `openai-secrets.yaml` with your API key:**
+   ```bash
+   # Edit the secret file
+   vi openshift/secrets/openai-secrets.yaml
+   # Replace REPLACE_WITH_YOUR_OPENAI_API_KEY with your actual API key
+   ```
+
+2. **Update the `services-config.yaml` ConfigMap:**
+   ```yaml
+   LLM_PROVIDER: "openai-compatible"
+   OPENAI_API_BASE_URL: "https://api.openai.com/v1"  # Or your custom endpoint
+   OPENAI_MODEL: "gpt-4"  # Or your preferred model
+   OPENAI_TEMPERATURE: "0"
+   ```
+
+3. **Apply the secret and restart the chat-docs-service:**
+   ```bash
+   oc apply -f openshift/secrets/openai-secrets.yaml
+   oc rollout restart deployment/chat-docs-service -n poc-onprem
+   ```
+
+### Configuration Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LLM_PROVIDER` | `ollama` | LLM provider to use: `ollama` or `openai-compatible` |
+| `OPENAI_API_KEY` | - | API key for OpenAI-compatible endpoint (from secret) |
+| `OPENAI_API_BASE_URL` | `https://api.openai.com/v1` | Base URL for OpenAI-compatible API |
+| `OPENAI_MODEL` | `gpt-4` | Model name to use |
+| `OPENAI_TEMPERATURE` | `0` | Temperature for response generation |
+
+**Note:** The `openai-secrets` secret is optional. If not provided, the service will default to using Ollama. This allows existing Ollama-only deployments to continue working without changes.
+
 ## Default Credentials
 
 ### Airflow

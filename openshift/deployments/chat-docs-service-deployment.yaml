@@ -28,5 +28,8 @@ spec:
         envFrom:
         - configMapRef:
             name: services-config
+        - secretRef:
+            name: openai-secrets
+            optional: true  # Make it optional so Ollama-only deployments still work
 
 # Made with Bob

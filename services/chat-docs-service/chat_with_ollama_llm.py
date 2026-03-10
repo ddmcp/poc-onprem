@@ -1,3 +1,15 @@
+"""
+DEPRECATION NOTICE:
+This module is deprecated and maintained only for backward compatibility.
+Please use llm_chat_client.py with the create_llm_client() factory function instead.
+
+The new abstraction layer supports both Ollama and OpenAI-compatible endpoints.
+To use Ollama (default): Set LLM_PROVIDER=ollama (or leave unset)
+To use OpenAI-compatible: Set LLM_PROVIDER=openai-compatible and OPENAI_API_KEY
+
+This file will be removed in a future version.
+"""
+
 import os
 from langchain_ollama import ChatOllama
 from langchain_core.messages import SystemMessage, HumanMessage, BaseMessage

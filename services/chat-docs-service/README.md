@@ -68,6 +68,69 @@ The service uses environment variables defined in `.env.dev`.
 | `QDRANT_HOST` | Qdrant host address | `qdrant-pdf-vector-db` |
 | `QDRANT_PORT` | Qdrant HTTP port | `6333` |
 
+## LLM Provider Configuration
+
+The chat-docs-service supports multiple LLM providers through a flexible abstraction layer.
+
+### Supported Providers
+
+#### 1. Ollama (Default)
+Uses a local Ollama instance for LLM inference.
+
+**Configuration:**
+```bash
+LLM_PROVIDER=ollama  # or leave unset (default)
+OLLAMA_CHAT_URL=http://ollama-llm-chat:11434
+OLLAMA_CHAT_MODEL=gemma:2b
+```
+
+#### 2. OpenAI-Compatible Endpoints
+Supports OpenAI API and any OpenAI-compatible endpoint (e.g., Azure OpenAI, local vLLM, etc.).
+
+**Configuration:**
+```bash
+LLM_PROVIDER=openai-compatible
+OPENAI_API_KEY=your-api-key-here
+OPENAI_API_BASE_URL=https://api.openai.com/v1  # or custom endpoint
+OPENAI_MODEL=gpt-4
+OPENAI_TEMPERATURE=0
+```
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `LLM_PROVIDER` | No | `ollama` | LLM provider: `ollama` or `openai-compatible` |
+| `OLLAMA_CHAT_URL` | No | `http://ollama-llm-chat:11434` | Ollama service URL |
+| `OLLAMA_CHAT_MODEL` | No | `gemma:2b` | Ollama model name |
+| `OPENAI_API_KEY` | Yes* | - | OpenAI API key (*required for openai-compatible) |
+| `OPENAI_API_BASE_URL` | No | `https://api.openai.com/v1` | OpenAI API base URL |
+| `OPENAI_MODEL` | No | `gpt-4` | OpenAI model name |
+| `OPENAI_TEMPERATURE` | No | `0` | Temperature for response generation |
+
+### Switching Providers
+
+**Development (.env files):**
+```bash
+# For Ollama
+LLM_PROVIDER=ollama
+
+# For OpenAI
+LLM_PROVIDER=openai-compatible
+OPENAI_API_KEY=sk-...
+```
+
+**Production (OpenShift):**
+See the [OpenShift deployment documentation](../../openshift/README.md#llm-provider-configuration) for instructions on configuring providers in Kubernetes/OpenShift.
+
+### Architecture
+
+The service uses an abstract `LLMChatClient` interface with provider-specific implementations:
+- `OllamaLLMClient`: Uses `langchain-ollama` (ChatOllama) for Ollama integration
+- `OpenAICompatibleClient`: Uses `langchain-openai` (ChatOpenAI) for OpenAI-compatible endpoints
+
+Both implementations use LangChain's unified interface for consistency. The factory pattern (`create_llm_client()`) instantiates the appropriate client based on the `LLM_PROVIDER` environment variable.
+
 ## 📂 Project Structure
 
 ```text

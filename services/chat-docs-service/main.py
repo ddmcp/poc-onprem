@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from search_service import SearchService
-from chat_with_ollama_llm import ChatWithOllamaLlm
+from llm_chat_client import create_llm_client
 from prompts import SYSTEM_PROMPT
 from logger_config import setup_logger
 from dotenv import load_dotenv
@@ -22,10 +22,20 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Text Searcher Microservice...")
     try:
         app.state.search_service = SearchService()
-        app.state.chat_with_ollama_llm = ChatWithOllamaLlm()
+        app.state.llm_client = create_llm_client()
+        
+        # Validate OpenAI configuration if using openai-compatible provider
+        provider = os.getenv("LLM_PROVIDER", "ollama").lower()
+        if provider == "openai-compatible":
+            api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY environment variable is required when LLM_PROVIDER is 'openai-compatible'")
+            logger.info("OpenAI-compatible provider configured successfully")
+        
         logger.info("Services initialized successfully.")
     except Exception as e:
         logger.error(f"Failed to initialize services: {e}")
+        raise
     yield
     logger.info("Shutting down Text Searcher Microservice...")
 
@@ -110,9 +120,9 @@ async def ask_llm_model(request: Request, search_request: SearchRequest):
     3. Construct context and generate final answer.
     """
     search_service = getattr(request.app.state, "search_service", None)
-    chat_with_ollama_llm = getattr(request.app.state, "chat_with_ollama_llm", None)
+    llm_client = getattr(request.app.state, "llm_client", None)
     
-    if search_service is None or chat_with_ollama_llm is None:
+    if search_service is None or llm_client is None:
         raise HTTPException(status_code=503, detail="Services not initialized")
     
     start_time = time.time()
@@ -134,9 +144,9 @@ async def ask_llm_model(request: Request, search_request: SearchRequest):
         ])
         
         # Step 5: Generate final answer
-        llm_answer, llm_messages = chat_with_ollama_llm.generate_response(
-            SYSTEM_PROMPT, 
-            context=context_text, 
+        llm_answer, llm_messages = llm_client.generate_response(
+            SYSTEM_PROMPT,
+            context=context_text,
             user_prompt=user_looking_for_query
         )
         logger.info("Step 5: Final answer generated.")

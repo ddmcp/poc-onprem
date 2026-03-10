@@ -8,3 +8,4 @@ requests
 debugpy
 langchain
 langchain-ollama
+langchain-openai
