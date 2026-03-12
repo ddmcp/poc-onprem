@@ -31,7 +31,8 @@ data:
   OPENAI_TEMPERATURE: "0"
   
   # Chat UI configuration
-  #CHAT_API_URL: "http://chat-docs-service.poc-onprem:8000/ask_llm_model"
-  CHAT_API_URL: "http://chat-docs-service-poc-onprem.apps.rio-wx.automation.nca.ihost.com/ask_llm_model"
+  # NOTE: needs to be your expected external route for chat-docs-service,
+  # replace example.com with the right hostname for your cluster
+  CHAT_API_URL: "http://chat-docs-service-poc-onprem.apps.example.com/ask_llm_model"
 
 # Made with Bob
