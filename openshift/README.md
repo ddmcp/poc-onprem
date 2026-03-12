@@ -30,7 +30,7 @@ This directory contains OpenShift manifests converted from the Docker Compose pr
     - [PostgreSQL (PDF)](#postgresql-pdf)
   - [LLM Provider Configuration](#llm-provider-configuration)
     - [Ollama (Default)](#ollama-default)
-    - [OpenAI-Compatible Endpoints](#openai-compatible-endpoints)
+    - [OpenAI-Compatible Endpoints (vLLM Recommended)](#openai-compatible-endpoints-vllm-recommended)
     - [Configuration Variables](#configuration-variables)
 
 ## Directory Structure
@@ -275,8 +275,8 @@ The chat-docs-service supports two LLM providers:
 #### Ollama (Default)
 No additional configuration needed. The service will use the Ollama deployment by default.
 
-#### OpenAI-Compatible Endpoints
-To use OpenAI or any OpenAI-compatible endpoint:
+#### OpenAI-Compatible Endpoints (vLLM Recommended)
+To use OpenAI-compatible endpoints such as vLLM (recommended for on-premises deployments):
 
 1. **Update the `openai-secrets.yaml` with your API key:**
    ```bash
@@ -288,8 +288,8 @@ To use OpenAI or any OpenAI-compatible endpoint:
 2. **Update the `services-config.yaml` ConfigMap:**
    ```yaml
    LLM_PROVIDER: "openai-compatible"
-   OPENAI_API_BASE_URL: "https://api.openai.com/v1"  # Or your custom endpoint
-   OPENAI_MODEL: "gpt-4"  # Or your preferred model
+   OPENAI_API_BASE_URL: "http://your-vllm-endpoint:8000/v1"  # Your vLLM endpoint
+   OPENAI_MODEL: "ibm/granite-3-3-8b-instruct"  # Default model
    OPENAI_TEMPERATURE: "0"
    ```
 
@@ -305,8 +305,10 @@ To use OpenAI or any OpenAI-compatible endpoint:
 |----------|---------|-------------|
 | `LLM_PROVIDER` | `ollama` | LLM provider to use: `ollama` or `openai-compatible` |
 | `OPENAI_API_KEY` | - | API key for OpenAI-compatible endpoint (from secret) |
-| `OPENAI_API_BASE_URL` | `https://api.openai.com/v1` | Base URL for OpenAI-compatible API |
-| `OPENAI_MODEL` | `gpt-4` | Model name to use |
+| `OPENAI_API_BASE_URL` | `http://your-vllm-endpoint:8000/v1` | Base URL for OpenAI-compatible API (vLLM recommended) |
+| `OPENAI_MODEL` | `ibm/granite-3-3-8b-instruct` | Model name to use |
 | `OPENAI_TEMPERATURE` | `0` | Temperature for response generation |
 
 **Note:** The `openai-secrets` secret is optional. If not provided, the service will default to using Ollama. This allows existing Ollama-only deployments to continue working without changes.
+
+**Recommended Setup:** For on-premises deployments, we recommend using vLLM as your OpenAI-compatible endpoint with the `ibm/granite-3-3-8b-instruct` model for optimal performance and security.

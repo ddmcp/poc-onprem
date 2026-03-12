@@ -84,15 +84,15 @@ OLLAMA_CHAT_URL=http://ollama-llm-chat:11434
 OLLAMA_CHAT_MODEL=gemma:2b
 ```
 
-#### 2. OpenAI-Compatible Endpoints
-Supports OpenAI API and any OpenAI-compatible endpoint (e.g., Azure OpenAI, local vLLM, etc.).
+#### 2. OpenAI-Compatible Endpoints (vLLM Recommended)
+Supports any OpenAI-compatible endpoint. **vLLM is the recommended option** for on-premises deployments, providing high-performance inference with the `ibm/granite-3-3-8b-instruct` model.
 
 **Configuration:**
 ```bash
 LLM_PROVIDER=openai-compatible
 OPENAI_API_KEY=your-api-key-here
-OPENAI_API_BASE_URL=https://api.openai.com/v1  # or custom endpoint
-OPENAI_MODEL=gpt-4
+OPENAI_API_BASE_URL=http://your-vllm-endpoint:8000/v1  # vLLM endpoint
+OPENAI_MODEL=ibm/granite-3-3-8b-instruct  # Default recommended model
 OPENAI_TEMPERATURE=0
 ```
 
@@ -103,9 +103,9 @@ OPENAI_TEMPERATURE=0
 | `LLM_PROVIDER` | No | `ollama` | LLM provider: `ollama` or `openai-compatible` |
 | `OLLAMA_CHAT_URL` | No | `http://ollama-llm-chat:11434` | Ollama service URL |
 | `OLLAMA_CHAT_MODEL` | No | `gemma:2b` | Ollama model name |
-| `OPENAI_API_KEY` | Yes* | - | OpenAI API key (*required for openai-compatible) |
-| `OPENAI_API_BASE_URL` | No | `https://api.openai.com/v1` | OpenAI API base URL |
-| `OPENAI_MODEL` | No | `gpt-4` | OpenAI model name |
+| `OPENAI_API_KEY` | Yes* | - | API key for OpenAI-compatible endpoint (*required for openai-compatible) |
+| `OPENAI_API_BASE_URL` | No | `http://your-vllm-endpoint:8000/v1` | Base URL for OpenAI-compatible API (vLLM recommended) |
+| `OPENAI_MODEL` | No | `ibm/granite-3-3-8b-instruct` | Model name (vLLM with granite recommended) |
 | `OPENAI_TEMPERATURE` | No | `0` | Temperature for response generation |
 
 ### Switching Providers
@@ -115,9 +115,11 @@ OPENAI_TEMPERATURE=0
 # For Ollama
 LLM_PROVIDER=ollama
 
-# For OpenAI
+# For OpenAI-compatible (vLLM recommended)
 LLM_PROVIDER=openai-compatible
-OPENAI_API_KEY=sk-...
+OPENAI_API_KEY=your-api-key-here
+OPENAI_API_BASE_URL=http://your-vllm-endpoint:8000/v1
+OPENAI_MODEL=ibm/granite-3-3-8b-instruct
 ```
 
 **Production (OpenShift):**
