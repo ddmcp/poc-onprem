@@ -32,6 +32,12 @@ This directory contains OpenShift manifests converted from the Docker Compose pr
     - [Ollama (Default)](#ollama-default)
     - [OpenAI-Compatible Endpoints (vLLM Recommended)](#openai-compatible-endpoints-vllm-recommended)
     - [Configuration Variables](#configuration-variables)
+- [Optional: Deploy vLLM for High-Performance Inference](#optional-deploy-vllm-for-high-performance-inference)
+  - [Why Use vLLM?](#why-use-vllm)
+  - [Prerequisites](#prerequisites-1)
+  - [Deployment Steps](#deployment-steps)
+  - [Configuration Details](#configuration-details)
+  - [Verification](#verification)
 
 ## Directory Structure
 
@@ -312,3 +318,105 @@ To use OpenAI-compatible endpoints such as vLLM (recommended for on-premises dep
 **Note:** The `openai-secrets` secret is optional. If not provided, the service will default to using Ollama. This allows existing Ollama-only deployments to continue working without changes.
 
 **Recommended Setup:** For on-premises deployments, we recommend using vLLM as your OpenAI-compatible endpoint with the `ibm/granite-3-3-8b-instruct` model for optimal performance and security.
+
+## Optional: Deploy vLLM for High-Performance Inference
+
+vLLM is a high-performance inference engine optimized for large language models. It provides significantly better throughput and lower latency compared to Ollama, making it ideal for production deployments with high request volumes.
+
+### Why Use vLLM?
+
+- **Performance**: Up to 24x higher throughput than traditional inference engines
+- **Efficiency**: Advanced memory management with PagedAttention for better GPU utilization
+- **Compatibility**: OpenAI-compatible API that works seamlessly with existing applications
+- **Production-Ready**: Designed for high-concurrency workloads with continuous batching
+
+### Prerequisites
+
+Before deploying vLLM, ensure your OpenShift cluster has:
+
+1. **GPU Support**: At least one NVIDIA GPU node with the NVIDIA GPU Operator installed
+2. **Storage**: 20Gi of persistent storage for model caching
+3. **Resources**: Minimum 6Gi memory and 2 CPU cores (16Gi memory and 10 CPU cores recommended)
+
+### Deployment Steps
+
+1. **Deploy the vLLM service:**
+   ```bash
+   oc apply -f deployments/granite-vllm-deployment.yaml
+   ```
+
+   This deployment includes:
+   - A PersistentVolumeClaim (`model-cache`) for storing the downloaded model
+   - An init container that downloads the `ibm-granite/granite-3.3-8b-instruct` model from Hugging Face
+   - The vLLM server container configured to serve the model via OpenAI-compatible API
+
+2. **Create a Service for vLLM (if not already created):**
+   ```bash
+   cat <<EOF | oc apply -f -
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: granite-vllm-service
+     namespace: poc-onprem
+   spec:
+     selector:
+       app: granite-338b-instruct
+     ports:
+       - protocol: TCP
+         port: 8000
+         targetPort: 8000
+     type: ClusterIP
+   EOF
+   ```
+
+3. **Wait for the deployment to be ready:**
+   ```bash
+   # This may take 10-15 minutes as the init container downloads the model
+   oc wait --for=condition=available --timeout=900s deployment/granite-338b-instruct
+   ```
+
+   Monitor the init container progress:
+   ```bash
+   oc logs -f deployment/granite-338b-instruct -c fetch-model
+   ```
+
+4. **Configure the chat-docs-service to use vLLM:**
+   
+   Update the `configmaps/services-config.yaml` file:
+   ```yaml
+   LLM_PROVIDER: "openai-compatible"
+   OPENAI_API_BASE_URL: "http://granite-vllm-service:8000/v1"
+   OPENAI_MODEL: "ibm/granite-3-3-8b-instruct"
+   OPENAI_TEMPERATURE: "0"
+   ```
+
+5. **Apply the configuration and restart the service:**
+   ```bash
+   oc apply -f configmaps/services-config.yaml
+   oc rollout restart deployment/chat-docs-service -n poc-onprem
+   ```
+
+### Configuration Details
+
+The vLLM deployment is configured with:
+
+- **Model**: `ibm-granite/granite-3.3-8b-instruct` (automatically downloaded from Hugging Face)
+- **Served Model Name**: `ibm/granite-3-3-8b-instruct` (matches the OpenAI API format)
+- **Tensor Parallel Size**: 1 (uses a single GPU)
+- **Port**: 8000 (OpenAI-compatible API endpoint)
+- **GPU Requirements**: 1 NVIDIA GPU with at least 6Gi memory
+
+### Verification
+
+Test the vLLM endpoint:
+
+```bash
+# Port-forward to test locally
+oc port-forward deployment/granite-338b-instruct 8000:8000
+
+# In another terminal, test the API
+curl http://localhost:8000/v1/models
+```
+
+You should see a response listing the available model.
+

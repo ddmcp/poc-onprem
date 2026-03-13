@@ -1,0 +1,116 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: model-cache
+  namespace: poc-onprem
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  volumeMode: Filesystem
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: granite-338b-instruct
+  namespace: poc-onprem
+  labels:
+    app: granite-338b-instruct
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: granite-338b-instruct
+  template:
+    metadata:
+      labels:
+        app: granite-338b-instruct
+    spec:
+      restartPolicy: Always
+      initContainers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: fetch-model
+          command:
+            - /bin/bash
+            - '-c'
+          env:
+            - name: MODEL_PATH
+              value: /model
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: model-volume
+              mountPath: /model
+          terminationMessagePolicy: File
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          args:
+            - |
+              pip install -U "huggingface_hub[cli]"
+              huggingface-cli --version
+              huggingface-cli download ibm-granite/granite-3.3-8b-instruct --local-dir /model --cache-dir /model
+              echo "--- run text-generation-server convert-to-safetensors"
+              text-generation-server convert-to-safetensors /model
+               echo "--- run text-generation-server convert-to-fast-tokenizer"
+              text-generation-server convert-to-fast-tokenizer /model
+              echo "$(ls /model)"
+      serviceAccountName: default
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
+      securityContext: {}
+      containers:
+        - resources:
+            limits:
+              cpu: '10'
+              memory: 16Gi
+              nvidia.com/gpu: '1'
+            requests:
+              cpu: '2'
+              memory: 6Gi
+              nvidia.com/gpu: '1'
+          terminationMessagePath: /dev/termination-log
+          name: granite-338b-instruct
+          command:
+            - python
+            - '-m'
+            - vllm.entrypoints.openai.api_server
+          env:
+            - name: VLLM_SERVER_DEV_MODE
+              value: '1'
+            - name: DOCKER_CONFIG
+              value: /auth
+          ports:
+            - name: app-port
+              containerPort: 8000
+              protocol: TCP
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: model-volume
+              mountPath: /model
+            - name: shm
+              mountPath: /dev/shm
+          terminationMessagePolicy: File
+          image: 'registry.redhat.io/rhaiis/vllm-cuda-rhel9@sha256:a6645a8e8d7928dce59542c362caf11eca94bb1b427390e78f0f8a87912041cd'
+          args:
+            - '--port=8000'
+            - '--model=/model'
+            - '--served-model-name=ibm/granite-3-3-8b-instruct'
+            - '--tensor-parallel-size=1'
+      serviceAccount: default
+      volumes:
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: model-cache
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
+      dnsPolicy: ClusterFirst
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600

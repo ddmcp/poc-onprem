@@ -15,8 +15,6 @@ spec:
       labels:
         app: airflow-dag-processor
     spec:
-      imagePullSecrets:
-        - name: quay-pull-secret    
       serviceAccountName: poc-onprem-sa
       securityContext:
         fsGroup: 0      
