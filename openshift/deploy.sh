@@ -100,6 +100,7 @@ oc apply -f routes/chat-docs-service-route.yaml
 
 # 12. Init Airflow
 echo "🚀 Creating airflow admin user..."
+oc wait --for=condition=available --timeout=600s deployment/airflow-api-server || echo "⚠️  airflow-api-server may need more time"
 oc exec -it -n poc-onprem \
   $(oc get pods -n poc-onprem -l app=airflow-api-server -o jsonpath='{.items[0].metadata.name}') \
   -- airflow users create \
