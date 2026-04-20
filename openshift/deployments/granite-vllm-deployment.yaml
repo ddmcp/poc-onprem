@@ -48,12 +48,15 @@ spec:
           args:
             - |
               pip install -U "huggingface_hub[cli]"
-              huggingface-cli --version
-              huggingface-cli download ibm-granite/granite-3.3-8b-instruct --local-dir /model --cache-dir /model
-              echo "--- run text-generation-server convert-to-safetensors"
-              text-generation-server convert-to-safetensors /model
-               echo "--- run text-generation-server convert-to-fast-tokenizer"
-              text-generation-server convert-to-fast-tokenizer /model
+              export HF_HUB_OFFLINE=0
+              hf --version
+              hf download ibm-granite/granite-3.3-8b-instruct --local-dir /model --cache-dir /model
+              # ls /model ## for debugging
+              ### Tensors and tokenisers exist so skip these steps 
+              # echo "--- run text-generation-server convert-to-safetensors"
+              # text-generation-server convert-to-safetensors /model 
+              # echo "--- run text-generation-server convert-to-fast-tokenizer"
+              # text-generation-server convert-to-fast-tokenizer /model
               echo "$(ls /model)"
       serviceAccountName: default
       schedulerName: default-scheduler
@@ -91,7 +94,9 @@ spec:
             - name: shm
               mountPath: /dev/shm
           terminationMessagePolicy: File
-          image: 'registry.redhat.io/rhaiis/vllm-cuda-rhel9@sha256:a6645a8e8d7928dce59542c362caf11eca94bb1b427390e78f0f8a87912041cd'
+           # changed image version to use vllm compatible with CUDA version - https://catalog.redhat.com/en/software/containers/rhaiis/vllm-cuda-rhel9/6825c6b827e18fe3162148a9
+          image: 'registry.redhat.io/rhaiis/vllm-cuda-rhel9:3.2.2-1774351144'
+         # image: 'registry.redhat.io/rhaiis/vllm-cuda-rhel9@sha256:a6645a8e8d7928dce59542c362caf11eca94bb1b427390e78f0f8a87912041cd'
           args:
             - '--port=8000'
             - '--model=/model'
