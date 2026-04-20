@@ -335,8 +335,20 @@ vLLM is a high-performance inference engine optimized for large language models.
 Before deploying vLLM, ensure your OpenShift cluster has:
 
 1. **GPU Support**: At least one NVIDIA GPU node with the NVIDIA GPU Operator installed
-2. **Storage**: 20Gi of persistent storage for model caching
-3. **Resources**: Minimum 6Gi memory and 2 CPU cores (16Gi memory and 10 CPU cores recommended)
+2. **NFD Operator**: The Node Feature Discovery (NFD) Operator is a prerequisite for the NVIDIA GPU Operator. 
+3. **Storage**: 20Gi of persistent storage for model caching
+4. **Resources**: Minimum 6Gi memory and 2 CPU cores (16Gi memory and 10 CPU cores recommended)
+
+### Installing Operators 
+
+An OpenShift Operator is a method of packaging, deploying, and managing a Kubernetes application, the operator hub provides access to a wide range of applications ready to install software for your technology needs.
+Read more about Openshfit operators [here](https://www.redhat.com/en/technologies/cloud-computing/openshift/what-are-openshift-operators)
+
+To install the Node Feature Discovery Operator following this guide -> 
+[Node Feature Discovery Operator](https://docs.nvidia.com/datacenter/cloud-native/openshift/latest/install-nfd.html)
+
+To install the NVIDIA GPU Operator following this guide -> 
+[NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/openshift/latest/install-gpu-ocp.html)
 
 ### Deployment Steps
 
