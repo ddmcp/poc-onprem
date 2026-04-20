@@ -11,6 +11,10 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: ocs-storagecluster-cephfs
+      ## Change the storageClassName to reflect that ofa file system storage that exists on your cluster, you can see a list of intstalled storage classes under the storage -> storageClass .
+      ## To understand more about storage in Openshift container platform - https://docs.redhat.com/en/documentation/openshift_container_platform/4.15/html-single/storage/index
+      ## If you have IBM Cloud file storage for VPC you can learn more about the storage classes installed here - https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=ui
+  storageClassName: ibmc-vpc-file-500-iops
+ # storageClassName: ocs-storagecluster-cephfs
 
 # Made with Bob
