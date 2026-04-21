@@ -207,3 +207,6 @@ The environment is pre-configured for remote debugging using `debugpy`.
 
 ## 🏷 Tags
 `Airflow 3.x` • `MinIO` • `Qdrant` • `PostgreSQL` • `RAG` • `Docker` • `Python` • `FastAPI` • `Ollama` • `LLM` • `GenAI`
+## Authorship
+Based on [imaxfp@gmail.com](https://github.com/imaxfp/chat_docs_AI)
+Copyright (c) 2025
